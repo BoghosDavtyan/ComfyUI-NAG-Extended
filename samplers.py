@@ -174,7 +174,16 @@ class NAGCFGGuider(CFGGuider):
 
         self.nag_negative_cond = None
         if apply_guidance:
-            self.nag_negative_cond = copy.deepcopy(self.origin_nag_negative_cond)
+            self.nag_negative_cond =[]
+            for c in self.origin_nag_negative_cond:
+                item = [c[0]]
+                if len(c) > 1 and isinstance(c[1], dict):
+                    item.append(c[1].copy())
+                elif len(c) > 1:
+                    item.append(c[1])
+                if len(c) > 2:
+                    item.extend(c[2:])
+                self.nag_negative_cond.append(item)
 
             model = self.model_patcher.model.diffusion_model
             if isinstance(model, OptimizedModule):
