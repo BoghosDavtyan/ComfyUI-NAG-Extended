@@ -3,7 +3,7 @@
 from functools import partial
 from types import MethodType
 from typing import Callable
-
+import inspect
 import torch
 from torch import Tensor
 from einops import rearrange
@@ -357,8 +357,16 @@ class NAGKlein(Flux):
                         )
                 
                 out = self.forward_orig(
-                    img, img_ids, context, txt_ids, txt_ids_negative, 
-                    timestep, y, guidance, control, transformer_options,
+                    img=img,
+                    img_ids=img_ids,
+                    txt=context,
+                    txt_ids=txt_ids,
+                    txt_ids_negative=txt_ids_negative,
+                    timesteps=timestep,
+                    y=y,
+                    guidance=guidance,
+                    control=control,
+                    transformer_options=transformer_options,
                     attn_mask=kwargs.get("attention_mask", None),
                     context_pad_len=context_pad_len,
                     nag_pad_len=nag_pad_len,
@@ -394,10 +402,25 @@ class NAGKlein(Flux):
                         dtype=torch.float32
                     )
             
+            sig = inspect.signature(Flux.forward_orig)
+            pass_kwargs = {}
+            if "attn_mask" in sig.parameters:
+                pass_kwargs["attn_mask"] = kwargs.get("attention_mask", None)
+            if "timestep_zero_index" in sig.parameters:
+                pass_kwargs["timestep_zero_index"] = kwargs.get("timestep_zero_index", None)
+            
             out = Flux.forward_orig(
-                self, img, img_ids, context, txt_ids, timestep, y, guidance, 
-                control, transformer_options,
-                attn_mask=kwargs.get("attention_mask", None),
+                self, 
+                img=img, 
+                img_ids=img_ids, 
+                txt=context, 
+                txt_ids=txt_ids, 
+                timesteps=timestep, 
+                y=y, 
+                guidance=guidance, 
+                control=control, 
+                transformer_options=transformer_options,
+                **pass_kwargs
             )
 
         out = out[:, :img_tokens]
